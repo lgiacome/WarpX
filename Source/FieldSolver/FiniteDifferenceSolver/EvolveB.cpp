@@ -30,12 +30,12 @@ void FiniteDifferenceSolver::EvolveB (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
-    int lev, amrex::Real const dt,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending) {
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
+    int lev, amrex::Real const dt ) {
 
    // Select algorithm (The choice of algorithm is a runtime option,
    // but we compile code for each algorithm, using templates)
@@ -59,8 +59,9 @@ void FiniteDifferenceSolver::EvolveB (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveVAndRhoCartesianECT( Efield, edge_lengths, face_areas, lev, Vfield, Rhofield );
-        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, area_stab, lev, dt, Rhofield, flag_unst_cell, borrowing, lending);
+        EvolveVAndRhoCartesianECT( Efield, edge_lengths, face_areas, Vfield, Rhofield, lev );
+        EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, area_stab, Rhofield,
+                             flag_unst_cell, borrowing, lending, lev, dt);
 #endif
     } else {
         amrex::Abort("EvolveB: Unknown algorithm");
@@ -160,9 +161,8 @@ void FiniteDifferenceSolver::EvolveVAndRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    int lev,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield  ) {
+    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
 
@@ -258,11 +258,11 @@ void FiniteDifferenceSolver::EvolveBCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_enl,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_red,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& area_stab,
-    int lev, amrex::Real const dt,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield,
     std::array< std::unique_ptr<amrex::iMultiFab>, 3 >& flag_unst_cell,
     std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& borrowing,
-    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending) {
+    std::array< std::unique_ptr<amrex::LayoutData<FaceInfoBox> >, 3 >& lending,
+    int lev, amrex::Real const dt ) {
 
     amrex::LayoutData<amrex::Real> *cost = WarpX::getCosts(lev);
 
