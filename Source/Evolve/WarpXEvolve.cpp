@@ -47,13 +47,13 @@ WarpX::Evolve (int numsteps)
 
 #ifdef AMREX_USE_EB
     //If necessary initialize the em fields
-      std::string geom_type;
-      amrex::ParmParse pp_eb2("eb2");
-      bool init_em_field;
-      pp_eb2.get("geom_type", geom_type);
-      pp_eb2.get("init_em_field", init_em_field);
-      if(init_em_field and geom_type=="sphere") {
-      InitEMFieldSphere();
+    std::string geom_type;
+    amrex::ParmParse pp_eb2("eb2");
+    bool init_em_field;
+    pp_eb2.get("geom_type", geom_type);
+    pp_eb2.get("init_em_field", init_em_field);
+    if(init_em_field and geom_type=="sphere") {
+        InitEMFieldSphere();
     }
 #endif
 

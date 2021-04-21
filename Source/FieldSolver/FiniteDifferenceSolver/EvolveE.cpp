@@ -44,7 +44,7 @@ void FiniteDifferenceSolver::EvolveE (
 
         EvolveECartesian <CartesianNodalAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
-    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee) {
+    } else if (m_fdtd_algo == MaxwellSolverAlgo::Yee or m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
         EvolveECartesian <CartesianYeeAlgorithm> ( Efield, Bfield, Jfield, edge_lengths, Ffield, lev, dt );
 
@@ -126,6 +126,7 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDz(By, coefs_z, n_coefs_z, i, j, k)
                     + T_Algo::DownwardDy(Bz, coefs_y, n_coefs_y, i, j, k)
                     - PhysConst::mu0 * jx(i, j, k) );
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
@@ -136,6 +137,11 @@ void FiniteDifferenceSolver::EvolveECartesian (
                     - T_Algo::DownwardDx(Bz, coefs_x, n_coefs_x, i, j, k)
                     + T_Algo::DownwardDz(Bx, coefs_z, n_coefs_z, i, j, k)
                     - PhysConst::mu0 * jy(i, j, k) );
+
+                if(isnan(Ex(i,j,k))){
+                    std::cout<<"cane"<<std::endl;
+                }
+
             },
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){

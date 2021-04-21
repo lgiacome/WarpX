@@ -1,4 +1,4 @@
-max_step = 100
+max_step = 1000
 amr.n_cell = 48 48 48
 amr.max_grid_size = 128
 amr.max_level = 0
@@ -10,6 +10,7 @@ geometry.prob_hi     =  0.5  0.5  0.5
 warpx.do_pml = 0
 warpx.const_dt = 1e-6
 warpx.cfl = 1
+algo.maxwell_solver = ECT
 
 eb2.geom_type = sphere
 eb2.sphere_center = 0. 0. 0.
