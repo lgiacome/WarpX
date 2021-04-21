@@ -182,11 +182,10 @@ class FiniteDifferenceSolver
             int const rhocomp,
             amrex::Real const dt );
 
-        void EvolveVAndRhoCartesianECT (
+        void EvolveRhoCartesianECT (
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-            std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
             std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev);
 
         void EvolveBCartesianECT (

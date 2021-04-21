@@ -59,7 +59,7 @@ void FiniteDifferenceSolver::EvolveB (
 
     } else if (m_fdtd_algo == MaxwellSolverAlgo::ECT) {
 
-        EvolveVAndRhoCartesianECT( Efield, edge_lengths, face_areas, Vfield, Rhofield, lev );
+        EvolveRhoCartesianECT( Efield, edge_lengths, face_areas, Rhofield, lev );
         EvolveBCartesianECT( Bfield, face_areas, area_enl, area_red, area_stab, Rhofield,
                              flag_unst_cell, borrowing, lending, lev, dt);
 #endif
@@ -157,11 +157,10 @@ void FiniteDifferenceSolver::EvolveBCartesian (
     }
 }
 
-void FiniteDifferenceSolver::EvolveVAndRhoCartesianECT (
+void FiniteDifferenceSolver::EvolveRhoCartesianECT (
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& Efield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& edge_lengths,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 > const& face_areas,
-    std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Vfield,
     std::array< std::unique_ptr<amrex::MultiFab>, 3 >& Rhofield, int lev ) {
 
     amrex::LayoutData<amrex::Real>* cost = WarpX::getCosts(lev);
@@ -170,7 +169,7 @@ void FiniteDifferenceSolver::EvolveVAndRhoCartesianECT (
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-    for ( MFIter mfi(*Vfield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
+    for ( MFIter mfi(*Rhofield[0], TilingIfNotGPU()); mfi.isValid(); ++mfi ) {
         if (cost && WarpX::load_balance_costs_update_algo == LoadBalanceCostsUpdateAlgo::Timers) {
             amrex::Gpu::synchronize();
         }
@@ -180,9 +179,6 @@ void FiniteDifferenceSolver::EvolveVAndRhoCartesianECT (
         Array4<Real> const &Ex = Efield[0]->array(mfi);
         Array4<Real> const &Ey = Efield[1]->array(mfi);
         Array4<Real> const &Ez = Efield[2]->array(mfi);
-        Array4<Real> const &Vx = Vfield[0]->array(mfi);
-        Array4<Real> const &Vy = Vfield[1]->array(mfi);
-        Array4<Real> const &Vz = Vfield[2]->array(mfi);
         Array4<Real> const &Rhox = Rhofield[0]->array(mfi);
         Array4<Real> const &Rhoy = Rhofield[1]->array(mfi);
         Array4<Real> const &Rhoz = Rhofield[2]->array(mfi);
@@ -194,49 +190,33 @@ void FiniteDifferenceSolver::EvolveVAndRhoCartesianECT (
         amrex::Array4<amrex::Real> const &Sz = face_areas[2]->array(mfi);
 
         // Extract tileboxes for which to loop
-        Box const &tvx = mfi.tilebox(Vfield[0]->ixType().toIntVect());
-        Box const &tvy = mfi.tilebox(Vfield[1]->ixType().toIntVect());
-        Box const &tvz = mfi.tilebox(Vfield[2]->ixType().toIntVect());
+        Box const &trhox = mfi.tilebox(Rhofield[0]->ixType().toIntVect());
+        Box const &trhoy = mfi.tilebox(Rhofield[1]->ixType().toIntVect());
+        Box const &trhoz = mfi.tilebox(Rhofield[2]->ixType().toIntVect());
 
-        amrex::ParallelFor(tvx, tvy, tvz,
+        amrex::ParallelFor(trhox, trhoy, trhoz,
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sx(i, j, k) <= 0 or isnan(Sx(i, j, k))) return;
 
-                Vx(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
-                               Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k));
+                Rhox(i, j, k) = (Ey(i, j, k) * ly(i, j, k) - Ey(i, j, k + 1) * ly(i, j, k + 1) +
+                    Ez(i, j + 1, k) * lz(i, j + 1, k) - Ez(i, j, k) * lz(i, j, k)) / Sx(i, j, k);
 
-                Rhox(i, j, k) = Vx(i, j, k) / Sx(i, j, k);
-                if(i == 10 and j ==11 and k ==30){
-                    std::cout<<"==================="<<std::endl;
-                    std::cout<<Ey(i, j, k)<<std::endl;
-                    std::cout<<Ey(i, j, k + 1)<<std::endl;
-                    std::cout<<Ez(i, j, k)<<std::endl;
-                    std::cout<<Ez(i, j + 1, k)<<std::endl;
-                    std::cout<<Vx(i, j, k)<<std::endl;
-                    std::cout<<Sx(i, j, k)<<std::endl;
-                    std::cout<<Rhox(i, j, k)<<std::endl;
-                    std::cout<<"cane"<<std::endl;
-                }
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sy(i, j, k) <= 0 or isnan(Sy(i, j, k))) return;
 
-                Vy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
-                               Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k));
-
-                Rhoy(i, j, k) = Vy(i, j, k) / Sy(i, j, k);
+                Rhoy(i, j, k) = (Ez(i, j, k) * lz(i, j, k) - Ez(i + 1, j, k) * lz(i + 1, j, k) +
+                    Ex(i, j, k + 1) * lx(i, j, k + 1) - Ex(i, j, k) * lx(i, j, k)) / Sy(i, j, k);
 
             },
 
             [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (Sz(i, j, k) <= 0 or isnan(Sz(i, j, k))) return;
 
-                Vz(i, j, k) = (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
-                                Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k));
-
-                Rhoz(i, j, k) = Vz(i, j, k) / Sz(i, j, k);
+                Rhoz(i, j, k) =  (Ex(i, j, k) * lx(i, j, k) - Ex(i, j + 1, k) * lx(i, j + 1, k) +
+                    Ey(i + 1, j, k) * ly(i + 1, j, k) - Ey(i, j, k) * ly(i, j, k)) / Sz(i, j, k);
 
             }
 
