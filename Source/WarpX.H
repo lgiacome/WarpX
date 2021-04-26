@@ -1052,7 +1052,8 @@ private:
     void ComputeAreaStab();
     int CountExtFaces();
     void ComputeFaceExtensions();
-    void ComputeOneWayExtensions();
+    amrex::Array1D<int, 0, 5> ComputeOneWayExtensions();
+    void ComputeEightWaysExtensions(amrex::Array1D<int, 0, 5> temp_inds);
     static amrex::RealArray AnalyticSolSphere (amrex::Real x, amrex::Real y, amrex::Real z, amrex::Real t, amrex::Real r_sphere);
     void InitEMFieldSphere ();
 
