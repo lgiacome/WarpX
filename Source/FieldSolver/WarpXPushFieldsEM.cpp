@@ -194,7 +194,7 @@ WarpX::EvolveB (int lev, PatchType patch_type, amrex::Real a_dt)
     if (patch_type == PatchType::fine) {
         m_fdtd_solver_fp[lev]->EvolveB(Bfield_fp[lev], Efield_fp[lev], m_face_areas[lev], lev, a_dt );
     } else {
-        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], m_face_areas[lev], lev, a_dt );
+        m_fdtd_solver_cp[lev]->EvolveB(Bfield_cp[lev], Efield_cp[lev], m_face_areas_cp[lev], lev, a_dt );
     }
 
     // Evolve B field in PML cells
@@ -247,7 +247,7 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt)
                                        F_fp[lev], lev, a_dt );
     } else {
         m_fdtd_solver_cp[lev]->EvolveE(Efield_cp[lev], Bfield_cp[lev],
-                                       current_cp[lev], m_edge_lengths[lev],
+                                       current_cp[lev], m_edge_lengths_cp[lev],
                                        F_cp[lev], lev, a_dt );
     }
 

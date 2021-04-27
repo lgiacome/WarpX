@@ -8,7 +8,7 @@
 
 
 void
-WarpX::InitEB ()
+WarpX::InitEB (int lev)
 {
 #ifdef AMREX_USE_EB
     BL_PROFILE("InitEB");
@@ -18,7 +18,7 @@ WarpX::InitEB ()
         std::string geom_type = "all_regular";
         pp_eb2.add("geom_type", geom_type); // use all_regular by default
     }
-    amrex::EB2::Build(Geom(maxLevel()), maxLevel(), maxLevel());
+    amrex::EB2::Build(Geom(lev), maxLevel(), lev);
 
 #endif
 }
@@ -28,19 +28,22 @@ WarpX::InitEB ()
  *        An edge of length 0 is fully covered.
  */
 void
-WarpX::ComputeEdgeLengths () {
+WarpX::ComputeEdgeLengths (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                           int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeEdgeLengths");
-
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    auto const eb_fact = fieldEBFactory(lev);
 
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &edge_centroid = eb_fact.getEdgeCent();
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi){
-        amrex::Box const &box = mfi.validbox();
+        amrex::Box box = mfi.validbox();
+        if(flag_cp and lev > 0){
+            box.coarsen(refRatio(lev-1));
+        }
         amrex::FabType fab_type = flags[mfi].getType(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim){
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
                 amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
@@ -79,19 +82,23 @@ WarpX::ComputeEdgeLengths () {
  *        An edge of area 0 is fully covered.
  */
 void
-WarpX::ComputeFaceAreas () {
+WarpX::ComputeFaceAreas (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                         int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ComputeFaceAreas");
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    auto const eb_fact = fieldEBFactory(lev);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
     auto const &area_frac = eb_fact.getAreaFrac();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
+        amrex::Box box = mfi.validbox();
+        if(flag_cp and lev > 0){
+            box.coarsen(refRatio(lev-1));
+        }
         amrex::FabType fab_type = flags[mfi].getType(box);
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
             if (fab_type == amrex::FabType::regular) {
                 // every cell in box is all regular
                 amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
@@ -120,18 +127,22 @@ WarpX::ComputeFaceAreas () {
  * \brief Scale the edges lengths by the mesh width to obtain the real lengths.
  */
 void
-WarpX::ScaleEdges () {
+WarpX::ScaleEdges (std::array< std::unique_ptr<amrex::MultiFab>, 3 >& edge_lengths,
+                   int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleEdges");
 
-    auto const &cell_size = CellSize(maxLevel());
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    auto const &cell_size = CellSize(lev);
+    auto const eb_fact = fieldEBFactory(lev);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
+        amrex::Box box = mfi.validbox();
+        if(flag_cp and lev > 0){
+            box.coarsen(refRatio(lev-1));
+        }
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            auto const &edge_lengths_dim = m_edge_lengths[maxLevel()][idim]->array(mfi);
+            auto const &edge_lengths_dim = edge_lengths[idim]->array(mfi);
             amrex::LoopOnCpu(amrex::convert(box, amrex::Box(edge_lengths_dim).ixType()),
                              [=](int i, int j, int k) {
                 edge_lengths_dim(i, j, k) *= cell_size[idim];
@@ -145,18 +156,22 @@ WarpX::ScaleEdges () {
  * \brief Scale the edges areas by the mesh width to obtain the real areas.
  */
 void
-WarpX::ScaleAreas() {
+WarpX::ScaleAreas(std::array< std::unique_ptr<amrex::MultiFab>, 3 >& face_areas,
+                  int lev, bool flag_cp) {
 #ifdef AMREX_USE_EB
     BL_PROFILE("ScaleAreas");
 
-    auto const& cell_size = CellSize(maxLevel());
+    auto const& cell_size = CellSize(lev);
     amrex::Real full_area;
 
-    auto const eb_fact = fieldEBFactory(maxLevel());
+    auto const eb_fact = fieldEBFactory(lev);
     auto const &flags = eb_fact.getMultiEBCellFlagFab();
 
     for (amrex::MFIter mfi(flags); mfi.isValid(); ++mfi) {
-        amrex::Box const &box = mfi.validbox();
+        amrex::Box box = mfi.validbox();
+        if(flag_cp and lev > 0){
+            box.coarsen(refRatio(lev-1));
+        }
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if (idim == 0) {
                 full_area = cell_size[1]*cell_size[2];
@@ -165,7 +180,7 @@ WarpX::ScaleAreas() {
             } else {
                 full_area = cell_size[0]*cell_size[1];
             }
-            auto const &face_areas_dim = m_face_areas[maxLevel()][idim]->array(mfi);
+            auto const &face_areas_dim = face_areas[idim]->array(mfi);
             amrex::LoopOnCpu(amrex::convert(box, amrex::Box(face_areas_dim).ixType()),
                              [=](int i, int j, int k) {
                                 face_areas_dim(i, j, k) *= full_area;
