@@ -124,6 +124,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
                 if (Sx(i, j, k) <= 0) return;
 #endif
                 Bx(i, j, k) += dt * T_Algo::UpwardDz(Ey, coefs_z, n_coefs_z, i, j, k)
@@ -132,6 +133,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
                 if (Sy(i, j, k) <= 0) return;
 #endif
                 By(i, j, k) += dt * T_Algo::UpwardDx(Ez, coefs_x, n_coefs_x, i, j, k)
@@ -140,6 +142,7 @@ void FiniteDifferenceSolver::EvolveBCartesian (
 
             [=] AMREX_GPU_DEVICE (int i, int j, int k){
 #ifdef AMREX_USE_EB
+                // Skip field push if this cell is fully covered by embedded boundaries
                 if (Sz(i, j, k) <= 0) return;
 #endif
                 Bz(i, j, k) += dt * T_Algo::UpwardDy(Ex, coefs_y, n_coefs_y, i, j, k)
