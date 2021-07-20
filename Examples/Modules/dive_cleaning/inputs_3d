@@ -10,7 +10,6 @@ geometry.prob_hi     =  50.e-6    50.e-6   50.e-6
 
 warpx.do_dive_cleaning = 1
 warpx.do_pml = 1
-warpx.use_filter = 0
 
 # Order of particle shape factors
 algo.particle_shape = 1

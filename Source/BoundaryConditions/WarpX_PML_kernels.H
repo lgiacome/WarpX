@@ -9,7 +9,6 @@
 #define WARPX_PML_KERNELS_H_
 
 #include "BoundaryConditions/PMLComponent.H"
-
 #include <AMReX.H>
 #include <AMReX_FArrayBox.H>
 

@@ -1,4 +1,4 @@
-/* Copyright 2019-2021
+/* Copyright 2019-2020
  *
  * This file is part of WarpX.
  *
@@ -6,12 +6,6 @@
  */
 
 #include "AnyFFT.H"
-
-#include <AMReX.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_REAL.H>
-
-#include <fftw3.h>
 
 namespace AnyFFT
 {
@@ -31,16 +25,6 @@ namespace AnyFFT
                        Complex * const complex_array, const direction dir, const int dim)
     {
         FFTplan fft_plan;
-
-#if defined(AMREX_USE_OMP) && defined(WarpX_FFTW_OMP)
-#   ifdef AMREX_USE_FLOAT
-        fftwf_init_threads();
-        fftwf_plan_with_nthreads(omp_get_max_threads());
-#   else
-        fftw_init_threads();
-        fftw_plan_with_nthreads(omp_get_max_threads());
-#   endif
-#endif
 
         // Initialize fft_plan.m_plan with the vendor fft plan.
         // Swap dimensions: AMReX FAB are Fortran-order but FFTW is C-order

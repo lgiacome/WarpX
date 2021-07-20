@@ -14,6 +14,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 /**
  *  Base class for reduced diagnostics. Each type of reduced diagnostics is

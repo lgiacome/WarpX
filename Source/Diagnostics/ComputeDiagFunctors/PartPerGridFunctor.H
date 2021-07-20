@@ -3,8 +3,6 @@
 
 #include "ComputeDiagFunctor.H"
 
-#include <AMReX_BaseFwd.H>
-
 /**
  * \brief Functor to cell-center MF and store result in mf_out.
  */

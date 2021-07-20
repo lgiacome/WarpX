@@ -9,10 +9,7 @@
 
 #include "Utils/IntervalsParser.H"
 
-#include <AMReX_REAL.H>
-
-#include <limits>
-#include <string>
+#include <AMReX_ParmParse.H>
 
 /**
  * \brief This class is used to determine if resampling should be done at a given timestep for

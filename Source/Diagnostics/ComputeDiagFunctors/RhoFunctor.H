@@ -3,8 +3,6 @@
 
 #include "ComputeDiagFunctor.H"
 
-#include <AMReX_BaseFwd.H>
-
 /**
  * \brief Functor to compute charge density rho into mf_out
  */

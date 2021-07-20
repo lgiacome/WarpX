@@ -10,8 +10,6 @@
 
 #include "ReducedDiags.H"
 
-#include <string>
-
 /**
  *  This class mainly contains a function that computes the total number of macroparticles and of
  *  physical particles (i.e. the sum of the weights) of each species.

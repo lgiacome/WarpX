@@ -6,24 +6,7 @@
  */
 
 #include "ParticleNumber.H"
-
-#include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
-
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_PODVector.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParticleReduce.H>
-#include <AMReX_Particles.H>
-#include <AMReX_REAL.H>
-
-#include <algorithm>
-#include <map>
-#include <ostream>
-#include <vector>
 
 using namespace amrex::literals;
 
@@ -54,39 +37,46 @@ ParticleNumber::ParticleNumber (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
-            int c = 0;
             ofs << "#";
-            ofs << "[" << c++ << "]step()";
+            ofs << "[1]step()";
             ofs << m_sep;
-            ofs << "[" << c++ << "]time(s)";
+            ofs << "[2]time(s)";
             ofs << m_sep;
-            ofs << "[" << c++ << "]total macroparticles()";
+            ofs << "[3]total macroparticles()";
             // Column number of first species macroparticle number
+            constexpr int shift_first_species_macroparticles = 4;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + " macroparticles()";
+                ofs << "[" + std::to_string(shift_first_species_macroparticles+i) + "]";
+                ofs << species_names[i]+" macroparticles()";
             }
             // Column number of total weight (summed over all species)
+            const int shift_total_sum_weight = shift_first_species_macroparticles + nSpecies;
             ofs << m_sep;
-            ofs << "[" << c++ << "]total weight()";
+            ofs << "[" + std::to_string(shift_total_sum_weight) + "]";
+            ofs << "total weight()";
             // Column number of first species weight
+            const int shift_first_species_sum_weight = shift_total_sum_weight + 1;
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + " weight()";
+                ofs << "[" + std::to_string(shift_first_species_sum_weight+i) + "]";
+                ofs << species_names[i]+" weight()";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
+
 }
 // end constructor
 
 // function that computes total number of macroparticles and physical particles
 void ParticleNumber::ComputeDiags (int step)
 {
+
     // Judge if the diags should be done
     if (!m_intervals.contains(step+1)) { return; }
 
@@ -150,5 +140,6 @@ void ParticleNumber::ComputeDiags (int step)
      *   sum of particles weight (species 1),
      *   ...,
      *   sum of particles weight (species n)] */
+
 }
 // end void ParticleNumber::ComputeDiags

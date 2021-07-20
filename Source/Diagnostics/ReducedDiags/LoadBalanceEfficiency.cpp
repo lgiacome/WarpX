@@ -4,19 +4,9 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#include "LoadBalanceEfficiency.H"
 
-#include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "Utils/IntervalsParser.H"
 #include "WarpX.H"
-
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
-#include <AMReX_REAL.H>
-
-#include <algorithm>
-#include <ostream>
-#include <vector>
+#include "LoadBalanceEfficiency.H"
 
 using namespace amrex;
 
@@ -41,15 +31,16 @@ LoadBalanceEfficiency::LoadBalanceEfficiency (std::string rd_name)
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
 
             // write header row
-            int c = 0;
             ofs << "#";
-            ofs << "[" << c++ << "]step()";
+            ofs << "[1]step()";
             ofs << m_sep;
-            ofs << "[" << c++ << "]time(s)";
+            ofs << "[2]time(s)";
+            constexpr int shift = 3;
             for (int lev = 0; lev < nLevel; ++lev)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]lev" + std::to_string(lev);
+                ofs << "[" + std::to_string(shift+lev) + "]";
+                ofs << "lev"+std::to_string(lev);
             }
             ofs << std::endl;
 

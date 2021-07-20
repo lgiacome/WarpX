@@ -9,12 +9,6 @@
 
 #include "Resampling.H"
 
-#include "Particles/WarpXParticleContainer_fwd.H"
-
-#include <AMReX_REAL.H>
-
-#include <string>
-
 /**
  * \brief This class implements the leveling thinning algorithm as defined in Muraviev, A., et al.
  * arXiv:2006.08593 (2020).

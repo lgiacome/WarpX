@@ -5,35 +5,19 @@
  * License: BSD-3-Clause-LBNL
  */
 #include "Laser/LaserProfiles.H"
-
-#include "Utils/WarpXUtil.H"
 #include "Utils/WarpX_Complex.H"
+#include "Utils/WarpXConst.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX.H>
-#include <AMReX_Algorithm.H>
-#include <AMReX_Config.H>
-#include <AMReX_Extension.H>
-#include <AMReX_GpuContainers.H>
-#include <AMReX_GpuDevice.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_PODVector.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
-#include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX.H>
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <fstream>
-#include <iterator>
 #include <limits>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
+#include <iostream>
+#include <fstream>
+#include <cstdint>
+#include <algorithm>
 
 using namespace amrex;
 

@@ -10,10 +10,8 @@
 
 #include "QedWrapperCommons.H"
 
-#include <AMReX_Random.H>
-
 #include <picsar_qed/physics/schwinger/schwinger_pair_engine_core.hpp>
-
+#include <AMReX_Random.H>
 #include <cmath>
 
 /**

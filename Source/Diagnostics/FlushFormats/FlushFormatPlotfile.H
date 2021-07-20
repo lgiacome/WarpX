@@ -2,16 +2,7 @@
 #define WARPX_FLUSHFORMATPLOTFILE_H_
 
 #include "FlushFormat.H"
-
-#include "Diagnostics/ParticleDiag/ParticleDiag_fwd.H"
-
-#include <AMReX_Geometry.H>
-#include <AMReX_Vector.H>
-
-#include <AMReX_BaseFwd.H>
-
-#include <iosfwd>
-#include <string>
+#include "Diagnostics/ParticleDiag/ParticleDiag.H"
 
 /**
  * \brief This class aims at dumping diags data to disk using the AMReX Plotfile format.
@@ -27,8 +18,7 @@ public:
         const amrex::Vector<amrex::MultiFab>& mf,
         amrex::Vector<amrex::Geometry>& geom,
         const amrex::Vector<int> iteration, const double time,
-        const amrex::Vector<ParticleDiag>& particle_diags, int nlev,
-        const std::string prefix, int file_min_digits,
+        const amrex::Vector<ParticleDiag>& particle_diags, int nlev, const std::string prefix,
         bool plot_raw_fields,
         bool plot_raw_fields_guards,
         bool plot_raw_rho, bool plot_raw_F,

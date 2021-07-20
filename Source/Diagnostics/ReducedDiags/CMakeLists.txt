@@ -2,12 +2,10 @@ target_sources(WarpX
   PRIVATE
     BeamRelevant.cpp
     FieldEnergy.cpp
-    FieldMomentum.cpp
     LoadBalanceCosts.cpp
     LoadBalanceEfficiency.cpp
     MultiReducedDiags.cpp
     ParticleEnergy.cpp
-    ParticleMomentum.cpp
     ParticleHistogram.cpp
     ReducedDiags.cpp
     FieldMaximum.cpp

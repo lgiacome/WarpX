@@ -68,10 +68,10 @@ class WarpX(Bucket):
 
         return argv
 
-    def init(self, mpi_comm=None):
+    def init(self):
         from . import wx
         argv = ['warpx'] + self.create_argv_list()
-        wx.initialize(argv, mpi_comm=mpi_comm)
+        wx.initialize(argv)
 
     def evolve(self, nsteps=-1):
         from . import wx

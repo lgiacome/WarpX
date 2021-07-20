@@ -6,31 +6,16 @@
  */
 
 #include "ParticleEnergy.H"
-
-#include "Diagnostics/ReducedDiags/ReducedDiags.H"
-#include "Particles/MultiParticleContainer.H"
-#include "Particles/SpeciesPhysicalProperties.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/IntervalsParser.H"
-#include "Utils/WarpXConst.H"
 #include "WarpX.H"
+#include "Utils/WarpXConst.H"
 
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_PODVector.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_ParticleReduce.H>
-#include <AMReX_Particles.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Reduce.H>
-#include <AMReX_Tuple.H>
-#include <AMReX_Vector.H>
+#include <AMReX_ParticleReduce.H>
 
-#include <algorithm>
+#include <iostream>
 #include <cmath>
-#include <fstream>
 #include <limits>
-#include <map>
-#include <vector>
+
 
 using namespace amrex;
 
@@ -60,178 +45,141 @@ ParticleEnergy::ParticleEnergy (std::string rd_name)
             // open file
             std::ofstream ofs{m_path + m_rd_name + "." + m_extension, std::ofstream::out};
             // write header row
-            int c = 0;
             ofs << "#";
-            ofs << "[" << c++ << "]step()";
+            ofs << "[1]step()";
             ofs << m_sep;
-            ofs << "[" << c++ << "]time(s)";
+            ofs << "[2]time(s)";
             ofs << m_sep;
-            ofs << "[" << c++ << "]total(J)";
+            ofs << "[3]total(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + "(J)";
+                ofs << "[" + std::to_string(4+i) + "]";
+                ofs << species_names[i]+"(J)";
             }
             ofs << m_sep;
-            ofs << "[" << c++ << "]total_mean(J)";
+            ofs << "[" + std::to_string(4+nSpecies) + "]";
+            ofs << "total_mean(J)";
             for (int i = 0; i < nSpecies; ++i)
             {
                 ofs << m_sep;
-                ofs << "[" << c++ << "]" << species_names[i] + "_mean(J)";
+                ofs << "[" + std::to_string(5+nSpecies+i) + "]";
+                ofs << species_names[i]+"_mean(J)";
             }
             ofs << std::endl;
             // close file
             ofs.close();
         }
     }
-}
 
+}
+// end constructor
+
+// function that computes kinetic energy
 void ParticleEnergy::ComputeDiags (int step)
 {
-    // Check if the diags should be done
-    if (m_intervals.contains(step+1) == false)
-    {
-        return;
-    }
 
-    // Get MultiParticleContainer class object
+    // Judge if the diags should be done
+    if (!m_intervals.contains(step+1)) { return; }
+
+    // get MultiParticleContainer class object
     const auto & mypc = WarpX::GetInstance().GetPartContainer();
 
-    // Get number of species
-    const int nSpecies = mypc.nSpecies();
+    // get number of species (int)
+    const auto nSpecies = mypc.nSpecies();
 
-    // Some useful constants
-    amrex::Real c2 = PhysConst::c * PhysConst::c;
-    amrex::Real c4 = c2 * c2;
+    // get species names (std::vector<std::string>)
+    const auto species_names = mypc.GetSpeciesNames();
 
-    // Some useful offsets to fill m_data below
-    int offset_total_species, offset_mean_species, offset_mean_all;
+    // speed of light squared
+    auto c2 = PhysConst::c * PhysConst::c;
 
-    amrex::Real Wtot = 0.0_rt;
-
-    // Loop over species
+    // loop over species
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-        // Get WarpXParticleContainer class object
+        // get WarpXParticleContainer class object
         const auto & myspc = mypc.GetParticleContainer(i_s);
 
-        // Get mass (used only for particles other than photons, see below)
-        amrex::Real m = myspc.getMass();
-        amrex::Real m2 = m * m;
+        // get mass (Real)
+        auto m = myspc.getMass();
 
         using PType = typename WarpXParticleContainer::SuperParticleType;
 
-        amrex::Real Etot = 0.0_rt;
-        amrex::Real Ws   = 0.0_rt;
-
-        // Use amrex::ParticleReduce to compute the sum of energies and weights of all particles
-        // held by the current MPI rank for this species (loop over all boxes held by this MPI rank):
-        // the result r is the tuple (Etot, Ws)
-        amrex::ReduceOps<ReduceOpSum, ReduceOpSum> reduce_ops;
-        if(myspc.AmIA<PhysicalSpecies::photon>())
-        {
-            // Photons have zero mass, but ux, uy and uz are calculated assuming a mass equal to the
-            // electron mass. Hence, photons need a special treatment to calculate the total energy.
+        // Use amrex::ReduceSum to compute the sum of energies of all particles
+        // held by the current MPI rank, for this species. This involves a loop over all
+        // boxes held by this MPI rank.
+        Real Etot = 0.0_rt;
+        if(myspc.AmIA<PhysicalSpecies::photon>()){
+            //Photons have m = 0, but ux,uy and uz are calculated assuming
+            //a mass equal to the electron mass. Therefore, photons need a special
+            //treatment to calculate the total energy.
             constexpr auto me_c = PhysConst::m_e * PhysConst::c;
-            auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
-                myspc,
-                [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
-                {
-                    const amrex::Real w  = p.rdata(PIdx::w);
-                    const amrex::Real ux = p.rdata(PIdx::ux);
-                    const amrex::Real uy = p.rdata(PIdx::uy);
-                    const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*me_c*std::sqrt(us), w};
-                },
-                reduce_ops);
-
-            Etot = amrex::get<0>(r);
-            Ws   = amrex::get<1>(r);
+            Etot = ReduceSum( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                const auto w  = p.rdata(PIdx::w);
+                const auto ux = p.rdata(PIdx::ux);
+                const auto uy = p.rdata(PIdx::uy);
+                const auto uz = p.rdata(PIdx::uz);
+                const auto us = ux*ux + uy*uy + uz*uz;
+                return std::sqrt(us) * me_c * w;
+            });
+        } else {
+            Etot = ReduceSum( myspc,
+            [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
+            {
+                const auto w  = p.rdata(PIdx::w);
+                const auto ux = p.rdata(PIdx::ux);
+                const auto uy = p.rdata(PIdx::uy);
+                const auto uz = p.rdata(PIdx::uz);
+                const auto us = ux*ux + uy*uy + uz*uz;
+                return ( std::sqrt(us*c2 + c2*c2) - c2 ) * m * w;
+            });
         }
-        else // particle other than photons
+
+        // Same thing for the particles weights.
+        auto Wtot = ReduceSum( myspc,
+        [=] AMREX_GPU_HOST_DEVICE (const PType& p) -> Real
         {
-            auto r = amrex::ParticleReduce<amrex::ReduceData<Real, Real>>(
-                myspc,
-                [=] AMREX_GPU_DEVICE(const PType& p) noexcept -> amrex::GpuTuple<Real, Real>
-                {
-                    const amrex::Real w  = p.rdata(PIdx::w);
-                    const amrex::Real ux = p.rdata(PIdx::ux);
-                    const amrex::Real uy = p.rdata(PIdx::uy);
-                    const amrex::Real uz = p.rdata(PIdx::uz);
-                    const amrex::Real us = ux*ux + uy*uy + uz*uz;
-                    return {w*(std::sqrt(us*m2*c2 + m2*c4) - m*c2), w};
-                },
-                reduce_ops);
+            return p.rdata(PIdx::w);
+        });
 
-            Etot = amrex::get<0>(r);
-            Ws   = amrex::get<1>(r);
-        }
+        // reduced sum over mpi ranks
+        ParallelDescriptor::ReduceRealSum
+            (Etot, ParallelDescriptor::IOProcessorNumber());
+        ParallelDescriptor::ReduceRealSum
+            (Wtot, ParallelDescriptor::IOProcessorNumber());
 
-        // Reduced sum over MPI ranks
-        ParallelDescriptor::ReduceRealSum(Etot, ParallelDescriptor::IOProcessorNumber());
-        ParallelDescriptor::ReduceRealSum(Ws  , ParallelDescriptor::IOProcessorNumber());
-
-        // Accumulate sum of weights over all species (must come after MPI reduction of Ws)
-        Wtot += Ws;
-
-        // Save results for this species i_s into m_data
-
-        // Offset:
-        // 1 value of total energy for all  species +
-        // 1 value of total energy for each species
-        offset_total_species = 1 + i_s;
-        m_data[offset_total_species] = Etot;
-
-        // Offset:
-        // 1 value of total energy for all  species +
-        // 1 value of total energy for each species +
-        // 1 value of mean  energy for all  species +
-        // 1 value of mean  energy for each species
-        offset_mean_species = 1 + nSpecies + 1 + i_s;
-        if (Ws > std::numeric_limits<Real>::min())
-        {
-            m_data[offset_mean_species] = Etot / Ws;
-        }
+        // save results for this species i_s into m_data
+        m_data[i_s+1] = Etot;
+        if ( Wtot > std::numeric_limits<Real>::min() )
+        { m_data[nSpecies+2+i_s] = Etot / Wtot; }
         else
-        {
-            m_data[offset_mean_species] = 0.0_rt;
-        }
+        { m_data[nSpecies+2+i_s] = 0.0; }
+
     }
+    // end loop over species
 
-    // Total energy
-    m_data[0] = 0.0_rt;
-
-    // Loop over species
+    // save total energy
+    // loop over species
+    m_data[0] = 0.0;          // total energy
+    m_data[nSpecies+1] = 0.0; // total mean energy
     for (int i_s = 0; i_s < nSpecies; ++i_s)
     {
-        // Offset:
-        // 1 value of total energy for all  species +
-        // 1 value of total energy for each species
-        offset_total_species = 1 + i_s;
-        m_data[0] += m_data[offset_total_species];
+        m_data[0] += m_data[i_s+1];
+        m_data[nSpecies+1] += m_data[nSpecies+2+i_s];
     }
+    // end loop over species
 
-    // Total mean energy. Offset:
-    // 1 value of total energy for all  species +
-    // 1 value of total energy for each species
-    offset_mean_all = 1 + nSpecies;
-    if (Wtot > std::numeric_limits<Real>::min())
-    {
-        m_data[offset_mean_all] = m_data[0] / Wtot;
-    }
-    else
-    {
-        m_data[offset_mean_all] = 0.0_rt;
-    }
+    /* m_data now contains up-to-date values for:
+     *  [total energy (all species),
+     *   total energy (species 1),
+     *   ...,
+     *   total energy (species n),
+     *   mean energy (all species),
+     *   mean energy (species 1),
+     *   ...,
+     *   mean energy (species n)] */
 
-    // m_data now contains up-to-date values for:
-    // [total energy (all species)
-    //  total energy (species 1)
-    //  ...
-    //  total energy (species n)
-    //  mean  energy (all species)
-    //  mean  energy (species 1)
-    //  ...
-    //  mean  energy (species n)]
 }
+// end void ParticleEnergy::ComputeDiags

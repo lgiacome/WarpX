@@ -1,14 +1,8 @@
-#include "ParticleDiag.H"
-
-#include "Diagnostics/ParticleDiag/ParticleDiag.H"
-#include "Particles/WarpXParticleContainer.H"
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+#include "ParticleDiag.H"
+#include "Utils/WarpXUtil.H"
 
 #include <AMReX_ParmParse.H>
-
-#include <map>
-#include <vector>
 
 using namespace amrex;
 
@@ -81,7 +75,7 @@ ParticleDiag::ParticleDiag(std::string diag_name, std::string name, WarpXParticl
         std::string function_string = "";
         Store_parserString(pp,"plot_filter_function(t,x,y,z,ux,uy,uz)",
                            function_string);
-        m_particle_filter_parser = std::make_unique<amrex::Parser>(
+        m_particle_filter_parser = std::make_unique<ParserWrapper<7>>(
             makeParser(function_string,{"t","x","y","z","ux","uy","uz"}));
     }
 }

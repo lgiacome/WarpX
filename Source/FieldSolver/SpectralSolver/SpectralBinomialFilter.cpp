@@ -6,7 +6,6 @@
  */
 
 #include "SpectralBinomialFilter.H"
-
 #include <AMReX_REAL.H>
 
 #include <cmath>

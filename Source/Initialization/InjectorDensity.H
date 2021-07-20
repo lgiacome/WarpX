@@ -9,18 +9,12 @@
 #ifndef INJECTOR_DENSITY_H_
 #define INJECTOR_DENSITY_H_
 
+#include "Parser/GpuParser.H"
 #include "CustomDensityProb.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX.H>
-#include <AMReX_Array.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_Math.H>
-#include <AMReX_Parser.H>
-#include <AMReX_REAL.H>
-
-#include <cmath>
-#include <string>
+#include <AMReX_Gpu.H>
+#include <AMReX_Dim3.H>
 
 // struct whose getDensity returns constant density.
 struct InjectorDensityConstant
@@ -41,7 +35,7 @@ private:
 // struct whose getDensity returns local density computed from parser.
 struct InjectorDensityParser
 {
-    InjectorDensityParser (amrex::ParserExecutor<3> const& a_parser) noexcept
+    InjectorDensityParser (WarpXParser const& a_parser) noexcept
         : m_parser(a_parser) {}
 
     AMREX_GPU_HOST_DEVICE
@@ -51,7 +45,8 @@ struct InjectorDensityParser
         return m_parser(x,y,z);
     }
 
-    amrex::ParserExecutor<3> m_parser;
+    // InjectorDensityParser constructs this GpuParser from WarpXParser.
+    GpuParser<3> m_parser;
 };
 
 // struct whose getDensity returns local density computed from predefined profile.
@@ -134,7 +129,7 @@ struct InjectorDensity
     { }
 
     // This constructor stores a InjectorDensityParser in union object.
-    InjectorDensity (InjectorDensityParser* t, amrex::ParserExecutor<3> const& a_parser)
+    InjectorDensity (InjectorDensityParser* t, WarpXParser const& a_parser)
         : type(Type::parser),
           object(t,a_parser)
     { }
@@ -201,7 +196,7 @@ private:
     union Object {
         Object (InjectorDensityConstant*, amrex::Real a_rho) noexcept
             : constant(a_rho) {}
-        Object (InjectorDensityParser*, amrex::ParserExecutor<3> const& a_parser) noexcept
+        Object (InjectorDensityParser*, WarpXParser const& a_parser) noexcept
             : parser(a_parser) {}
         Object (InjectorDensityCustom*, std::string const& a_species_name) noexcept
             : custom(a_species_name) {}

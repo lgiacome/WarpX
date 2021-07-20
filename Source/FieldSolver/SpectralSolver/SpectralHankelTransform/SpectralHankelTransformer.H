@@ -7,9 +7,8 @@
 #ifndef WARPX_SPECTRALHANKELTRANSFORMER_H_
 #define WARPX_SPECTRALHANKELTRANSFORMER_H_
 
-#include "HankelTransform.H"
-
 #include <AMReX_FArrayBox.H>
+#include "HankelTransform.H"
 
 /* \brief Object that allows to transform the fields back and forth between the
  *  spectral and interpolation grid.

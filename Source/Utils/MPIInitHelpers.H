@@ -7,7 +7,9 @@
 #ifndef WARPX_MPI_INIT_HELPERS_H_
 #define WARPX_MPI_INIT_HELPERS_H_
 
+#include <string>
 #include <utility>
+
 
 namespace utils
 {

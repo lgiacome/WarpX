@@ -32,8 +32,6 @@
 !                                          (www.jpmoreau.fr)
 ! ------------------------------------------------------------------------ */
 
-#include "Utils/WarpXConst.H"
-
 #include <AMReX_REAL.H>
 
 #include <cmath>

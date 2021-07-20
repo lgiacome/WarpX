@@ -1,17 +1,14 @@
 #include "BTD_Plotfile_Header_Impl.H"
-
 #include "WarpX.H"
 
-#include <AMReX.H>
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_PlotFileUtil.H>
 #include <AMReX_FileSystem.H>
 #include <AMReX_INT.H>
-#include <AMReX_Print.H>
-#include <AMReX_Utility.H>
-
-#include <array>
-#include <istream>
+#include <memory>
 
 using namespace amrex::literals;
+
 
 BTDPlotfileHeaderImpl::BTDPlotfileHeaderImpl (std::string const & Headerfile_path)
     : m_Header_path(Headerfile_path)

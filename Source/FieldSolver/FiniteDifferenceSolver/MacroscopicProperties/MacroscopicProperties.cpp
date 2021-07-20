@@ -1,22 +1,8 @@
 #include "MacroscopicProperties.H"
-
-#include "Utils/WarpXUtil.H"
 #include "WarpX.H"
+#include "Utils/WarpXUtil.H"
 
-#include <AMReX_Array4.H>
-#include <AMReX_BoxArray.H>
-#include <AMReX_Config.H>
-#include <AMReX_DistributionMapping.H>
-#include <AMReX_Geometry.H>
-#include <AMReX_GpuLaunch.H>
-#include <AMReX_IndexType.H>
-#include <AMReX_IntVect.H>
-#include <AMReX_MFIter.H>
 #include <AMReX_ParmParse.H>
-#include <AMReX_Print.H>
-#include <AMReX_RealBox.H>
-
-#include <AMReX_BaseFwd.H>
 
 #include <memory>
 
@@ -52,7 +38,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of sigma (conductivity) with parser
     if (m_sigma_s == "parse_sigma_function") {
         Store_parserString(pp_macroscopic, "sigma_function(x,y,z)", m_str_sigma_function);
-        m_sigma_parser = std::make_unique<Parser>(
+        m_sigma_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_sigma_function,{"x","y","z"}));
     }
 
@@ -72,7 +58,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of epsilon (permittivity) with parser
     if (m_epsilon_s == "parse_epsilon_function") {
         Store_parserString(pp_macroscopic, "epsilon_function(x,y,z)", m_str_epsilon_function);
-        m_epsilon_parser = std::make_unique<Parser>(
+        m_epsilon_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_epsilon_function,{"x","y","z"}));
     }
 
@@ -93,7 +79,7 @@ MacroscopicProperties::ReadParameters ()
     // initialization of mu (permeability) with parser
     if (m_mu_s == "parse_mu_function") {
         Store_parserString(pp_macroscopic, "mu_function(x,y,z)", m_str_mu_function);
-        m_mu_parser = std::make_unique<Parser>(
+        m_mu_parser = std::make_unique<ParserWrapper<3>>(
                                  makeParser(m_str_mu_function,{"x","y","z"}));
     }
 
@@ -124,7 +110,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_sigma_s == "parse_sigma_function") {
 
-        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), m_sigma_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_sigma_mf.get(), getParser(m_sigma_parser), lev);
     }
     // Initialize epsilon
     if (m_epsilon_s == "constant") {
@@ -133,7 +119,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_epsilon_s == "parse_epsilon_function") {
 
-        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), m_epsilon_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_eps_mf.get(), getParser(m_epsilon_parser), lev);
 
     }
     // Initialize mu
@@ -143,7 +129,7 @@ MacroscopicProperties::InitData ()
 
     } else if (m_mu_s == "parse_mu_function") {
 
-        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), m_mu_parser->compile<3>(), lev);
+        InitializeMacroMultiFabUsingParser(m_mu_mf.get(), getParser(m_mu_parser), lev);
 
     }
 
@@ -179,7 +165,7 @@ MacroscopicProperties::InitData ()
 
 void
 MacroscopicProperties::InitializeMacroMultiFabUsingParser (
-                       MultiFab *macro_mf, ParserExecutor<3> const& macro_parser,
+                       MultiFab *macro_mf, HostDeviceParser<3> const& macro_parser,
                        int lev)
 {
     auto& warpx = WarpX::GetInstance();

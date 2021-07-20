@@ -7,31 +7,19 @@
 #ifndef WARPX_quantum_sync_engine_wrapper_h_
 #define WARPX_quantum_sync_engine_wrapper_h_
 
-#include "BreitWheelerEngineWrapper_fwd.H"
-
-#include "QedChiFunctions.H"
 #include "QedWrapperCommons.H"
+#include "QedChiFunctions.H"
 #include "Utils/WarpXConst.H"
 
-#include <AMReX_Extension.H>
-#include <AMReX_GpuContainers.H>
-#include <AMReX_GpuQualifiers.H>
-#include <AMReX_REAL.H>
-#include <AMReX_Random.H>
+#include <AMReX_Array.H>
 #include <AMReX_Vector.H>
+#include <AMReX_Gpu.H>
 
-#include <picsar_qed/containers/picsar_array.hpp>
-#include <picsar_qed/math/cmath_overloads.hpp>
-#include <picsar_qed/math/vec_functions.hpp>
-#include <picsar_qed/physics/phys_constants.h>
-#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_core.hpp>
 #include <picsar_qed/physics/quantum_sync/quantum_sync_engine_tables.hpp>
-#include <picsar_qed/physics/unit_conversion.hpp>
+#include <picsar_qed/physics/quantum_sync/quantum_sync_engine_core.hpp>
 
-#include <cmath>
+#include <string>
 #include <vector>
-
-namespace amrex { struct RandomEngine; }
 
 // Aliases =============================
 using QS_dndt_table_params =

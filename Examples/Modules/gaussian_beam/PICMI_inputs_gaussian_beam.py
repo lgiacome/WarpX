@@ -27,8 +27,6 @@ grid = picmi.Cartesian3DGrid(number_of_cells = [nx, ny, nz],
                              upper_bound = [xmax, ymax, zmax],
                              lower_boundary_conditions = ['periodic', 'periodic', 'open'],
                              upper_boundary_conditions = ['periodic', 'periodic', 'open'],
-                             lower_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
-                             upper_boundary_conditions_particles = ['periodic', 'periodic', 'absorbing'],
                              warpx_max_grid_size=16)
 
 solver = picmi.ElectromagneticSolver(grid = grid,
@@ -60,8 +58,7 @@ part_diag1 = picmi.ParticleDiagnostic(name = 'diag1',
 sim = picmi.Simulation(solver = solver,
                        max_steps = 10,
                        verbose = 1,
-                       warpx_current_deposition_algo = 'direct',
-                       warpx_use_filter = 0)
+                       warpx_current_deposition_algo = 'direct')
 
 sim.add_species(electrons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))
 sim.add_species(protons, layout=picmi.PseudoRandomLayout(n_macroparticles=number_sim_particles))

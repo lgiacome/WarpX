@@ -2,9 +2,6 @@
 #define WARPX_FULLDIAGNOSTICS_H_
 
 #include "Diagnostics.H"
-#include "Utils/IntervalsParser.H"
-
-#include <string>
 
 class
 FullDiagnostics final : public Diagnostics
@@ -69,10 +66,8 @@ private:
     void PrepareFieldDataForOutput () override;
     /** Update the physical extent of the diagnostic domain for moving window and
      *  galilean shift simulations
-     *
-     * \param[in] step current time step
      */
-    void MovingWindowAndGalileanDomainShift (int step) override;
+    void MovingWindowAndGalileanDomainShift () override;
     /** This function queries deprecated input parameters and abort
      *  the run if one of them is specified.
      */

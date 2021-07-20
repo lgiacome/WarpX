@@ -9,8 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_FIELDENERGY_H_
 
 #include "ReducedDiags.H"
-
-#include <string>
+#include <fstream>
 
 /**
  *  This class mainly contains a function that
@@ -27,11 +26,12 @@ public:
     FieldEnergy(std::string rd_name);
 
     /**
-     * This function computes the field energy (EF):
-     * EF = sum( 1/2 * (|E|^2 * eps0 + |B|^2 / mu0) * dV ),
-     * where E is the electric field, B is the magnetic field,
-     * eps0 is the vacuum permittivity, mu0 is the vacuum permeability,
-     * dV is the cell volume (area, in 2D) and the sum is over all cells.
+     * This function computes the field energy (EF).
+     * EF = E eps / 2 + B / mu / 2,
+     * where E is the electric field,
+     * B is the magnetic field,
+     * eps is the vacuum permittivity,
+     * mu is the vacuum permeability.
      *
      * @param[in] step current time step
      */

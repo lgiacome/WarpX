@@ -9,7 +9,6 @@
 #define ANYFFT_H_
 
 #include <AMReX_Config.H>
-#include <AMReX_LayoutData.H>
 
 #if defined(AMREX_USE_CUDA)
 #  include <cufft.h>
@@ -18,6 +17,8 @@
 #else
 #  include <fftw3.h>
 #endif
+
+#include <AMReX_LayoutData.H>
 
 /**
  * Wrapper around FFT libraries. The header file defines the API and the base types

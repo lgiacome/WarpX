@@ -8,14 +8,7 @@
 #ifndef WARPX_FielIO_H_
 #define WARPX_FielIO_H_
 
-#include <AMReX_REAL.H>
-
-#include <AMReX_BaseFwd.H>
-
-#include <array>
-#include <cstdint>
-#include <memory>
-#include <vector>
+#include <WarpX.H>
 
 void
 AverageAndPackVectorField( amrex::MultiFab& mf_avg,

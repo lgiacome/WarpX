@@ -1,4 +1,4 @@
-name: 🪟 Windows
+name: windows
 
 on: [push, pull_request]
 

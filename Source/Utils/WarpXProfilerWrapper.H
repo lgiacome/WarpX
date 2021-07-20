@@ -10,7 +10,6 @@
 
 #include <AMReX_BLProfiler.H>
 #include <AMReX_GpuDevice.H>
-#include <WarpX.H>
 
 AMREX_FORCE_INLINE
 void doDeviceSynchronize(int do_device_synchronize)

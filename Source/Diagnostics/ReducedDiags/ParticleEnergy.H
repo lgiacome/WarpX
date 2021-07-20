@@ -9,8 +9,7 @@
 #define WARPX_DIAGNOSTICS_REDUCEDDIAGS_PARTICLEENERGY_H_
 
 #include "ReducedDiags.H"
-
-#include <string>
+#include <fstream>
 
 /**
  *  This class mainly contains a function that
